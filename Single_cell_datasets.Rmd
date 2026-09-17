@@ -1,0 +1,600 @@
+---
+title: "CVO scRNAseq datasets"
+output: html_notebook
+date: 'Created on: `r format(Sys.Date(), "%B %d, %Y")`'
+---
+
+```{r,warning=FALSE}
+suppressPackageStartupMessages(library(ggplot2)) 
+suppressPackageStartupMessages(library(Seurat))
+suppressPackageStartupMessages(library(cowplot))
+suppressPackageStartupMessages(library(dplyr))
+```
+
+```{r}
+path="~/Documents/CVO_scRNAseq/" 
+```
+
+
+### K66 ME full dataset
+
+
+```{r}
+seur=readRDS(paste0(path,"results/K66_withClec7a_DK_no_artefacts_corrected_final.rds"))
+```
+
+
+```{r}
+new.order=c (  "Mglia 1",  "BAM 1" , "BAM 2"  , "MdC"  , "cDC1" ,"cDC2" ,"pDC"  ,"Mono",  "Neutro"  ,"T" ,"ILC","NK"  ,"B" )
+new.order[!new.order %in% levels( seur$annot.final)]
+levels( seur$annot.final)[!levels( seur$annot.final) %in%new.order]
+```
+
+
+```{r}
+seur$annot.final=factor( seur$annot.final, levels=new.order)
+```
+
+
+```{r}
+cols.use2=c( "Mglia 1"="goldenrod1",  "BAM 1"="lightblue" , "BAM 2"="purple"  , "MdC"="brown3" , "cDC1"="coral" ,"cDC2"="gold4" ,"pDC"="violetred"  ,"Mono"="pink",  "Neutro"="dodgerblue"  ,"T"="darkolivegreen1" ,"ILC"="turquoise","NK"="green3"  ,"B"="yellow3")
+```
+
+```{r , fig.height = 6, fig.width =10}
+DimPlot(seur, group.by = "annot.final",repel =T,label=T, cols=cols.use2)+theme(axis.title = element_blank(), axis.text = element_blank(), axis.line = element_blank(), axis.ticks = element_blank(), plot.title = element_blank()) 
+```
+
+
+
+```{r , fig.height =5, fig.width = 6}
+FeaturePlot(object = seur,order=T, features = c("Clec7a"), slot = "counts", max.cutoff = "q98")+theme(axis.title = element_blank(), axis.text = element_blank(), axis.line = element_blank(), axis.ticks = element_blank()) 
+```
+
+
+```{r , fig.height = 5, fig.width =14}
+DotPlot(seur,group.by = "annot.final",features=c("Tmem119","P2ry12","Slc2a5","Sall1","Ctss","Ms4a7","Mrc1","Cd163","F13a1","Clec12a","Plbd1","H2-Aa","Cd74","Vim","Ccr2","Dpep2","Capg","Clec4b1","Flt3","Xcr1","Clec9a","Cd209a","Klrd1","Cd300lg","Clec10a","Ccr9","Pacsin1","Ly6d","Ly6c2","Fn1","Chil3","Emilin2","Ace","Ear2", "S100a8","Csf3r","Retnlg","Cd3e","Cd3g","Gata3","Rora","Il1rl1", "Arg1","Ncr1","Klrb1c","Gzma","Cd79a","Cd19","Ms4a1"))+RotatedAxis()+theme(axis.title = element_blank()) 
+```
+
+
+
+
+```{r , fig.height = 8, fig.width =6}
+plot=DotPlot(seur,group.by = "annot.final",features=c("C1qa","C1qb","Hpgds","Slco2b1","Ccl12","Sepp1","Glul","Hexb","Lgmn","Tmem119","P2ry12","Lag3","Sparc","Adgrg1","Sall1","Clec12a","Tgfbi","Mrc1","Cd163","Folr2","Dab2","Ms4a7","H2-Aa","Cd74","Plbd1","Flt3","Xcr1","Cd209a","Cd300lg","Ccr9","Ly6c2","Chil3","Emilin2","Cd3e","Cd3g","Gata3","Il1rl1","Ncr1","Klrb1c","Cd79a","Cd19"))+coord_flip()+RotatedAxis()+theme(axis.title = element_blank()) 
+plot
+```
+
+
+```{r , warning=FALSE}
+temp=seur[,WhichCells(seur,  expression=annot.final %in% c("T","ILC","NK","B") )]
+temp$annot.final=factor(temp$annot.final, levels=c("B","ILC","NK","T"))
+```
+
+
+```{r , fig.height = 5, fig.width =4}
+plot=DotPlot(temp,group.by = "annot.final",features=rev( c("Cd79a","Cd19","Ms4a1","Ebf1","Vpreb3","Thy1","Skap1","Gata3","Il1rl1","Ptpn13","Rora","Ncr1","Klrb1c","Klre1","Gzma","Cd3e","Cd3g","Cd28","Cd8a","Cd8b1","Cd4")))+coord_flip()+RotatedAxis()+theme(axis.title = element_blank()) 
+plot
+```
+
+```{r}
+seur$cluster_final=plyr::mapvalues(seur$annot.final, from = levels(seur$annot.final), to=1:length(levels(seur$annot.final)))
+seur$annot.final.combined<-paste0(seur$annot.final," (",seur$cluster_final,")")
+```
+
+```{r}
+cols.use3=c( "Mglia 1 (1)"="goldenrod1",  "BAM 1 (2)"="lightblue" , "BAM 2 (3)"="purple"  , "MdC (4)"="brown3" , "cDC1 (5)"="coral" ,"cDC2 (6)"="gold4" ,"pDC (7)"="violetred"  ,"Mono (8)"="pink",  "Neutro (9)"="dodgerblue"  ,"T (10)"="darkolivegreen1" ,"ILC (11)"="turquoise","NK (12)"="green3"  ,"B (13)"="yellow3")
+```
+
+
+```{r , fig.height = 6, fig.width =10}
+DimPlot(seur, group.by = "annot.final.combined",repel =T,label=T, cols=cols.use3)+theme(axis.title = element_blank(), axis.text = element_blank(), axis.line = element_blank(), axis.ticks = element_blank(), plot.title = element_blank()) 
+```
+
+
+
+
+
+---
+
+
+### K67 AP full dataset
+
+
+```{r}
+seur=readRDS(paste0(path,"results/K67_withClec7a_DK_no_artefacts_corrected_final.rds"))
+```
+
+
+```{r}
+new.order=c ( "Mglia 1",  "BAM 1" , "BAM 2"  ,"Mono",  "T" ,"ILC","NK"  ,"B" )
+new.order[!new.order %in% levels( seur$annot.final)]
+levels( seur$annot.final)[!levels( seur$annot.final) %in%new.order]
+```
+
+
+
+```{r}
+seur$annot.final=factor( seur$annot.final, levels=new.order)
+```
+
+
+```{r}
+cols.use2=c(  "Mglia 1"="goldenrod1",  "BAM 1"="lightblue" ,"BAM 2"="purple"  , "Mono"="pink",  "Neutro"="dodgerblue"  ,"T"="darkolivegreen1" ,"ILC"="turquoise","NK"="green3"  ,"B"="yellow3")
+```
+```{r , fig.height = 5, fig.width =5}
+p=DimPlot(seur, group.by = "annot.final", label=T, repel=T, cols=cols.use2, pt.size = 0.4)+theme(axis.title = element_blank(), axis.text = element_blank(), axis.line = element_blank(), axis.ticks = element_blank(), plot.title = element_blank()) +NoLegend()
+p
+```
+
+
+
+```{r , fig.height = 6, fig.width =7}
+FeaturePlot(seur, order=T,  "Clec7a")+theme(axis.title = element_blank(), axis.text = element_blank(), axis.line = element_blank(), axis.ticks = element_blank()) 
+```
+
+
+```{r , fig.height = 4, fig.width =10}
+DotPlot(seur,group.by = "annot.final",features=c("Tmem119","P2ry12","Slc2a5","Sall1","Ctss","Ms4a7","Mrc1","Cd163","F13a1","Clec12a","Plbd1","H2-Aa","Cd74","Ccr2","Ly6c2","Fn1","Chil3","Emilin2","Ace","Ear2", "Cd3e","Cd3g","Ncr1","Klrb1c","Gzma","Gata3","Rora","Il1rl1", "Arg1","Cd79a","Cd19","Ms4a1"))+RotatedAxis()+theme(axis.title = element_blank()) 
+```
+
+
+
+
+```{r , fig.height = 8, fig.width =6}
+plot=DotPlot(seur,group.by = "annot.final",features=c("C1qa","C1qb","Hpgds","Slco2b1","Ccl12","Glul","Hexb","Lgmn","Tmem119","P2ry12","Lag3","Sparc","Adgrg1","Sall1","Sepp1","Clec12a","Tgfbi","Mrc1","Cd163","Folr2","Dab2","Ms4a7","H2-Aa","Cd74","Plbd1","Ly6c2","Chil3","Emilin2","Cd3e","Cd3g","Gata3","Il1rl1","Ncr1","Klrb1c","Cd79a","Cd19"))+coord_flip()+RotatedAxis()+theme(axis.title = element_blank()) 
+plot
+```
+
+
+
+```{r , warning=FALSE}
+temp=seur[,WhichCells(seur,  expression=annot.final %in% c("T","ILC","NK","B") )]
+temp$annot.final=factor(temp$annot.final, levels=c("B","ILC","NK","T"))
+```
+
+
+
+```{r , fig.height = 5, fig.width =4}
+plot=DotPlot(temp,group.by = "annot.final",features=rev( c("Cd79a","Cd19","Ms4a1","Ebf1","Vpreb3","Thy1","Skap1","Gata3","Il1rl1","Ptpn13","Rora","Ncr1","Klrb1c","Klre1","Gzma","Cd3e","Cd3g","Cd28","Cd8a","Cd8b1","Cd4")))+coord_flip()+RotatedAxis()+theme(axis.title = element_blank()) 
+plot
+```
+
+
+
+```{r}
+seur$cluster_final=plyr::mapvalues(seur$annot.final, from = levels(seur$annot.final), to=1:length(levels(seur$annot.final)))
+seur$annot.final.combined<-paste0(seur$annot.final," (",seur$cluster_final,")")
+```
+
+```{r}
+cols.use3=c(  "Mglia 1 (1)"="goldenrod1",  "BAM 1 (2)"="lightblue" ,"BAM 2 (3)"="purple"  , "Mono (4)"="pink",  "T (5)"="darkolivegreen1" ,"ILC (6)"="turquoise","NK (7)"="green3"  ,"B (8)" ="yellow3")
+```
+
+
+```{r , fig.height = 6, fig.width =10}
+DimPlot(seur, group.by = "annot.final.combined",repel =T,label=T, cols=cols.use3)+theme(axis.title = element_blank(), axis.text = element_blank(), axis.line = element_blank(), axis.ticks = element_blank(), plot.title = element_blank()) 
+```
+
+
+
+---
+
+
+### K65 Whole brain full dataset
+
+
+```{r}
+seur=readRDS(paste0(path,"results/","K65_withClec7a_DK_no_artefacts_corrected_final.rds"))
+```
+
+
+
+```{r}
+cols.use2=c( "Mglia"="goldenrod1",  "BAM-lo"="lightblue" , "BAM-hi"="purple"  , "Prolif"="brown3" , "cDC1"="coral" ,"cDC2"="gold4" ,"pDC"="violetred"  ,"Mono"="pink",  "Neutro"="dodgerblue"  ,"T"="darkolivegreen1" ,"ILC2"="turquoise","NK"="green3"  ,"B"="yellow3")
+```
+
+
+```{r , fig.height = 6, fig.width =10}
+DimPlot(seur, group.by = "annot.final",repel =T,label=T, cols=cols.use2)+theme(axis.title = element_blank(), axis.text = element_blank(), axis.line = element_blank(), axis.ticks = element_blank(), plot.title = element_blank()) 
+```
+
+
+
+```{r}
+seur$cluster_final=plyr::mapvalues(seur$annot.final, from = levels(seur$annot.final), to=1:length(levels(seur$annot.final)))
+seur$annot.final.combined<-paste0(seur$annot.final," (",seur$cluster_final,")")
+```
+
+```{r}
+cols.use3=c(  "Mglia (1)"="goldenrod1",  "BAM-lo (3)"="lightblue" , "BAM-hi (4)"="purple"  , "Prolif (2)"="brown3" , "cDC1 (6)"="coral" ,"cDC2 (5)"="gold4" ,"pDC (7)"="violetred"  ,"Mono (9)"="pink",  "Neutro (8)"="dodgerblue"  ,"T (10)"="darkolivegreen1" ,"NK (11)"="green3"  ,"B (12)"="yellow3")
+```
+
+
+```{r , fig.height = 6, fig.width =10}
+DimPlot(seur, group.by = "annot.final.combined",repel =T,label=T, cols=cols.use3)+theme(axis.title = element_blank(), axis.text = element_blank(), axis.line = element_blank(), axis.ticks = element_blank(), plot.title = element_blank()) 
+```
+
+
+```{r , fig.height =4, fig.width =10}
+DotPlot(seur,group.by = "annot.final",features=c("P2ry12","Sall1","Ms4a7","Cd163","Clec12a","H2-Aa","Cd74","Ccr2","Cd209a","Itgax","Mgl2","Flt3","Xcr1","Clec9a","Ccr9","Ly6d","Csf3r","Retnlg","Ifitm3","Clec4a1","Ace","Ear2", "Cd3e","Cd3g","Cd226","Cd7","Xcl1","Ncr1","Klrb1c","Klra8","Gzma","Cd79a","Cd19","Ms4a1"))+RotatedAxis()+theme(axis.title = element_blank()) 
+```
+
+
+
+```{r , fig.height = 6, fig.width =7}
+FeaturePlot(seur, order=T,  "Clec7a")+theme(axis.title = element_blank(), axis.text = element_blank(), axis.line = element_blank(), axis.ticks = element_blank()) 
+```
+
+
+
+
+---
+
+
+
+
+### K65-K66-K67  ME + AP + whole brain: BAM subset
+
+```{r}
+seur=readRDS(paste0(path,"results/K65-K66-K67_BAM.seurat.corrected.rds"))
+```
+
+
+```{r , fig.height =4, fig.width =5}
+DimPlot(seur,repel =T,label=T, group.by = "tissue")+theme(axis.title = element_blank(), axis.text = element_blank(), axis.line = element_blank(), axis.ticks = element_blank(), plot.title = element_blank()) 
+```
+```{r , fig.height =4, fig.width =5}
+DimPlot(seur,repel =T,label=T)+theme(axis.title = element_blank(), axis.text = element_blank(), axis.line = element_blank(), axis.ticks = element_blank(), plot.title = element_blank()) 
+```
+
+
+
+
+```{r , fig.height =4, fig.width =4.3}
+FeaturePlot(seur, order=T,  "Clec7a")+theme(axis.title = element_blank(), axis.text = element_blank(), axis.line = element_blank(), axis.ticks = element_blank()) 
+```
+
+
+
+```{r , fig.height = 4, fig.width =8.5}
+plot=DotPlot(seur,group.by = "annot_tissue",features=c( "Mrc1","Pf4","F13a1", "Cd163","Lyve1","Folr2", "Cd38", "Siglec1","Clec12a","H2-K1","Irf7", "Ly6a","Gpx3",  "Axl", "Slc15a3","H2-Aa", "Cd74","Plbd1","Lyz2","Emp3","Ddx5","Ms4a7","Mbnl2","Ier5"))+RotatedAxis()+theme(axis.title = element_blank()) 
+plot
+```
+
+
+
+
+### K65-K66-K67  ME + AP + whole brain: Macrophage subset
+
+
+```{r}
+seur=readRDS(paste0(path,"results/K65-K66-K67_MFonly_withClec7a_DK_noartefact.seurat.rds"))
+```
+
+
+
+
+
+```{r}
+cols.use2=c("WB-MGLIA"  ="goldenrod1", "CVO-MGLIA (4)"  ="darkolivegreen1" , "CVO-MGLIA (3)"  ="palevioletred"  ,"CVO-MGLIA (1)" = "turquoise3" , "CVO-MGLIA (2)"= "dodgerblue"  ,"Lo-BAM" ="lightblue" , "Hi-BAM"  ="purple")
+```
+
+
+
+
+```{r , fig.height =5, fig.width =7}
+p=DimPlot(seur,group.by = "annot.final", repel =T,label=T, cols=cols.use2,reduction = "umapNew")+theme(axis.title = element_blank(), axis.text = element_blank(), axis.line = element_blank(), axis.ticks = element_blank(), plot.title = element_blank()) 
+p
+```
+
+
+```{r , fig.height =4, fig.width =5}
+DimPlot(seur, repel =T,label=T, group.by = "tissue",reduction = "umapNew", pt.size = 0.5)+theme(axis.title = element_blank(), axis.text = element_blank(), axis.line = element_blank(), axis.ticks = element_blank(), plot.title = element_blank()) 
+```
+
+
+
+```{r , warning=FALSE}
+i="CVO vs WB Mglia"
+DEG<-  FindMarkers(seur, subset.ident = c("WB-MGLIA" ,  "CVO-MGLIA (1)", "CVO-MGLIA (2)","CVO-MGLIA (3)", "CVO-MGLIA (4)" ), group.by = "tissue",ident.1=c("ME","AP"),ident.2 = "WB", pseudocount.use = 0.1,logfc.threshold = 0, min.pct = 0 )
+DEG$gene=rownames(DEG)
+DEG$contrast=i
+DEG$pseudocount.use=0.1
+```
+
+```{r}
+saveRDS(DEG, paste0(path,"results/DEG_Mglia_CVO.vs.WB.rds"))
+```
+```{r}
+i="CVO vs WB Mglia"
+DEG=readRDS( paste0(path,"results/DEG_Mglia_CVO.vs.WB.rds"))
+```
+
+```{r}
+DEG[DEG$gene=="Clec7a",]
+```
+
+```{r , fig.height =8, fig.width = 12}
+ggplot(data=DEG, aes(x= avg_log2FC, y = -log10(p_val_adj), group=gene)) +
+    geom_point(alpha = 1, size=2, aes(col = (p_val_adj<1e-10& abs(avg_log2FC)>0.7 ) | gene=="Clec7a" ))+
+    scale_color_manual(values = c("grey", "red")) +
+    geom_text_repel(data=subset(DEG,  (p_val_adj<1e-10& abs(avg_log2FC)>0.7 )| gene=="Clec7a"  ),
+                    aes(label = gene), size =5, fontface="italic", max.overlaps=10)+
+    theme_classic()+
+    theme(legend.position = "none",
+          axis.text=element_text(size=15),
+          axis.title=element_text(size=15),
+          panel.grid.minor = element_blank(),
+          panel.grid.major= element_blank()) +
+    xlab("avg_logFC") + ylab("-log10(p_val_adj)")
+```
+
+
+
+
+```{r , warning=FALSE}
+i="CVO-Mglia-4 vs other CVO Mglia"
+DEG<-  FindMarkers(seur,ident.1=c("CVO-MGLIA (4)"),ident.2 =c(  "CVO-MGLIA (1)", "CVO-MGLIA (2)" , "CVO-MGLIA (3)"), pseudocount.use = 0.1,logfc.threshold = 0, min.pct = 0 )
+DEG$gene=rownames(DEG)
+DEG$contrast=i
+DEG$pseudocount.use=0.1
+```
+
+```{r}
+saveRDS(DEG, paste0(path,"results/DEG_CVO-Mglia-4.vs.other.CVO.Mglia.rds"))
+```
+
+```{r}
+DEG=readRDS( paste0(path,"results/DEG_CVO-Mglia-4.vs.other.CVO.Mglia.rds"))
+```
+
+```{r}
+DEG[DEG$gene=="Clec7a",]
+```
+```{r , fig.height = 8, fig.width = 12}
+ggplot(data=DEG, aes(x= avg_log2FC, y = -log10(p_val_adj), group=gene)) +
+    geom_point(alpha = 1, size=2, aes(col =(p_val_adj<1e-5& abs(avg_log2FC)>0.5) | gene=="Clec7a"))+
+    scale_color_manual(values = c("grey", "red")) +
+    geom_text_repel(data=subset(DEG, ( p_val_adj<1e-5& abs(avg_log2FC)>0.5) | gene=="Clec7a"),
+                    aes(label = gene), size =5, fontface="italic", max.overlaps=10)+
+    theme_classic()+
+    theme(legend.position = "none",
+          axis.text=element_text(size=15),
+          axis.title=element_text(size=15),
+          panel.grid.minor = element_blank(),
+          panel.grid.major= element_blank()) +
+    xlab("avg_logFC") + ylab("-log10(p_val_adj)")
+```
+
+
+
+
+```{r , warning=FALSE}
+i="CVO-Mglia-4 vs other CVO Mglia excluding WB-Mglia"
+temp=seur[,seur$tissue !="WB"]
+DEG<-  FindMarkers(temp,ident.1=c("CVO-MGLIA (4)"),ident.2 =c(  "CVO-MGLIA (1)", "CVO-MGLIA (2)","CVO-MGLIA (3)"), pseudocount.use = 0.1,logfc.threshold = 0, min.pct = 0 )
+DEG$gene=rownames(DEG)
+DEG$contrast=i
+DEG$pseudocount.use=0.1
+```
+
+```{r}
+DEG[DEG$gene=="Clec7a",]
+```
+```{r , fig.height = 8, fig.width = 12}
+ggplot(data=DEG, aes(x= avg_log2FC, y = -log10(p_val_adj), group=gene)) +
+    geom_point(alpha = 1, size=2, aes(col =(p_val_adj<1e-5& abs(avg_log2FC)>0.5) | gene=="Clec7a"))+
+    scale_color_manual(values = c("grey", "red")) +
+    geom_text_repel(data=subset(DEG, ( p_val_adj<1e-5& abs(avg_log2FC)>0.5) | gene=="Clec7a"),
+                    aes(label = gene), size =5, fontface="italic", max.overlaps=10)+
+    theme_classic()+
+    theme(legend.position = "none",
+          axis.text=element_text(size=15),
+          axis.title=element_text(size=15),
+          panel.grid.minor = element_blank(),
+          panel.grid.major= element_blank()) +
+    xlab("avg_logFC") + ylab("-log10(p_val_adj)")
+```
+
+
+
+```{r}
+saveRDS(DEG, paste0(path,"results/DEG_CVO-Mglia-4.vs.other.CVO.Mglia_excl.WB.rds"))
+```
+
+```{r}
+DEG[DEG$gene=="Clec7a",]
+```
+
+
+
+
+```{r , warning=FALSE}
+i="CVO-Mglia-4 vs other Macrophages"
+DEG<-  FindMarkers(seur,ident.1=c("CVO-MGLIA (4)"), pseudocount.use = 0.1,logfc.threshold = 0, min.pct = 0 )
+DEG$gene=rownames(DEG)
+DEG$contrast=i
+DEG$pseudocount.use=0.1
+```
+
+```{r}
+saveRDS(DEG, paste0(path,"results/DEG_CVO-Mglia-4.vs.other.Macrophages.rds"))
+```
+
+```{r}
+DEG[DEG$gene=="Clec7a",]
+```
+```{r , fig.height = 8, fig.width = 12}
+ggplot(data=DEG, aes(x= avg_log2FC, y = -log10(p_val_adj), group=gene)) +
+    geom_point(alpha = 1, size=2, aes(col =(p_val_adj<1e-5& abs(avg_log2FC)>0.5) | gene=="Clec7a"))+
+    scale_color_manual(values = c("grey", "red")) +
+    geom_text_repel(data=subset(DEG, ( p_val_adj<1e-5& abs(avg_log2FC)>0.5) | gene=="Clec7a"),
+                    aes(label = gene), size =5, fontface="italic", max.overlaps=10)+
+    theme_classic()+
+    theme(legend.position = "none",
+          axis.text=element_text(size=15),
+          axis.title=element_text(size=15),
+          panel.grid.minor = element_blank(),
+          panel.grid.major= element_blank()) +
+    xlab("avg_logFC") + ylab("-log10(p_val_adj)")
+```
+
+
+
+
+```{r , warning=FALSE}
+i="ME vs AP Mglia"
+DEG<-  FindMarkers(seur, subset.ident = c("WB-MGLIA" ,  "CVO-MGLIA (1)", "CVO-MGLIA (2)","CVO-MGLIA (3)", "CVO-MGLIA (4)" ), group.by = "tissue",ident.1=c("ME"),ident.2 = "AP", pseudocount.use = 0.1,logfc.threshold = 0, min.pct = 0 )
+DEG$gene=rownames(DEG)
+DEG$contrast=i
+DEG$pseudocount.use=0.1
+```
+
+```{r}
+saveRDS(DEG, paste0(path,"results/DEG_Mglia_ME.vs.AP.rds"))
+```
+
+```{r , fig.height = 8, fig.width = 12}
+ggplot(data=DEG, aes(x= avg_log2FC, y = -log10(p_val_adj), group=gene)) +
+    geom_point(alpha = 1, size=2, aes(col =(p_val_adj<1e-5& abs(avg_log2FC)>0.5) | gene=="Clec7a"))+
+    scale_color_manual(values = c("grey", "red")) +
+    geom_text_repel(data=subset(DEG, ( p_val_adj<1e-5& abs(avg_log2FC)>0.5) | gene=="Clec7a"),
+                    aes(label = gene), size =5, fontface="italic", max.overlaps=10)+
+    theme_classic()+
+    theme(legend.position = "none",
+          axis.text=element_text(size=15),
+          axis.title=element_text(size=15),
+          panel.grid.minor = element_blank(),
+          panel.grid.major= element_blank()) +
+    xlab("avg_logFC") + ylab("-log10(p_val_adj)")
+```
+
+```{r}
+DEG[DEG$gene=="Clec7a",]
+```
+
+
+
+```{r , warning=FALSE}
+i="CVO-Mglia-4 vs other CVO Mglia"
+DEG<-  FindMarkers(seur,ident.1=c("CVO-MGLIA (3)"),ident.2 =c(  "CVO-MGLIA (1)", "CVO-MGLIA (2)", "CVO-MGLIA (4)" ), pseudocount.use = 0.1,logfc.threshold = 0, min.pct = 0 )
+DEG$gene=rownames(DEG)
+DEG$contrast=i
+DEG$pseudocount.use=0.1
+```
+```{r}
+saveRDS(DEG, paste0(path,"results/DEG_CVO-Mglia-4.vs.other.CVO.Mglia.rds"))
+```
+
+```{r , fig.height = 8, fig.width = 12}
+ggplot(data=DEG, aes(x= avg_log2FC, y = -log10(p_val_adj), group=gene)) +
+    geom_point(alpha = 1, size=2, aes(col =(p_val_adj<1e-5& abs(avg_log2FC)>0.5) | gene=="Clec7a"))+
+    scale_color_manual(values = c("grey", "red")) +
+    geom_text_repel(data=subset(DEG, ( p_val_adj<1e-5& abs(avg_log2FC)>0.5) | gene=="Clec7a"),
+                    aes(label = gene), size =5, fontface="italic", max.overlaps=10)+
+    theme_classic()+
+    theme(legend.position = "none",
+          axis.text=element_text(size=15),
+          axis.title=element_text(size=15),
+          panel.grid.minor = element_blank(),
+          panel.grid.major= element_blank()) +
+    xlab("avg_logFC") + ylab("-log10(p_val_adj)")
+```
+
+
+```{r , fig.height =4, fig.width =5}
+for ( i in c("Csmd3", "Khdrbs3", "Upk1b", "Clec7a", "Apoe", "Axl", "Ifi27l2a", "Ifi204", "Cybb", "Cd72","Lgals3", "Fabp5","Ifit3", "Irf7")){
+p=FeaturePlot(seur,features = i ,reduction = "umapNew", max.cutoff = "q98",order=T)+theme(axis.title = element_blank(), axis.text = element_blank(), axis.line = element_blank(), axis.ticks = element_blank()) 
+print(p)
+ggsave(p,file=paste0(path,"plots/FeaturePlots/FeaturePlot_",i,"_", dataset_name, ".pdf"), height = 5, width = 5.5,device="pdf",units="in" )
+}
+```
+
+
+
+
+
+
+---
+
+
+
+### ISC15 FLT3-YFP ME Macrophage subset
+
+
+```{r}
+seur=readRDS(paste0(path,"results/ISC15_MFonly_corrected_final.rds"))
+```
+
+
+
+
+```{r , fig.height = 5, fig.width =7}
+DimPlot(seur, repel =T,label=T)+theme(axis.title = element_blank(), axis.text = element_blank(), axis.line = element_blank(), axis.ticks = element_blank(), plot.title = element_blank()) 
+```
+
+
+
+
+```{r}
+seur$cluster_final=plyr::mapvalues(seur$annot.final, from = levels(seur$annot.final), to=1:length(levels(seur$annot.final)))
+seur$annot.final.combined<-paste0(seur$annot.final," (",seur$cluster_final,")")
+seur$annot.final.combined=plyr::mapvalues(seur$annot.final.combined, from ="Prolif.MGLIA (5)", to="Prolif.\nMGLIA (5)")
+```
+
+
+```{r , fig.height = 5, fig.width =7}
+DimPlot(seur, repel =T,label=T, group.by = "annot.final.combined")+theme(axis.title = element_blank(), axis.text = element_blank(), axis.line = element_blank(), axis.ticks = element_blank(), plot.title = element_blank()) 
+```
+
+
+```{r , fig.height = 5, fig.width =5.5}
+for ( i in c("Clec7a","Sall1","Sparc","Apoe","Irf7","Ms4a7","YFP")){
+ p= FeaturePlot(seur, order=T, features = i , max.cutoff = "q98")+theme(axis.title = element_blank(), axis.text = element_blank(), axis.line = element_blank(), axis.ticks = element_blank()) 
+ print(p)
+ ggsave(p,file=paste0(path,"plots/FeaturePlotsFLT3/FeaturePlot_",i,"_", dataset_name, ".pdf"), height = 5, width = 5.5,device="pdf",units="in" )
+}
+```
+
+
+
+```{r,warning=FALSE, echo=FALSE}
+seur$min.3reads.YFP="YFP-"
+seur$min.3reads.YFP[GetAssayData(seur, layer="counts")["YFP",]>=3]="YFP+"
+```
+
+```{r , fig.height = 6, fig.width = 7,warning=FALSE, echo=FALSE}
+DimPlot(object = seur, group.by="min.3reads.YFP", cols = c("YFP-"="grey","YFP+"="brown1"))+theme(axis.title = element_blank(), axis.text = element_blank(), axis.line = element_blank(), axis.ticks = element_blank()) 
+```
+```{r , fig.height =4, fig.width = 4,warning=FALSE, echo=FALSE}
+Ncells.bar.plot( seur, parameter="min.3reads.YFP", plot.subgroup="YFP+", colour.by.group=T,col.plot =cols.use)+theme_classic()+RotatedAxis()+theme(axis.title.x = element_blank())+NoLegend()
+```
+
+
+
+
+```{r , fig.height =4, fig.width =12}
+plot=DotPlot(seur, group.by = "annot.final", features =c("Khdrbs3","Sall3","Csmd3","Fos","Sall1","P2ry12","Slc2a5","Cd164","Tmem119","Apoe","H2-D1","B2m","Tmem176a","Cd52","Ifi27l2a","Cd72","Cybb","Axl","Ccl12","Irf7","Ifit3","Isg15","Cd9","Ctsb","Cd83","Clec7a","Fabp5","Cst7","Itgax","Lgals3","Lilrb4a","Lpl","Top2a","Mki67","H2-Aa","Ms4a7","Mrc1"))+RotatedAxis()+theme(axis.title = element_blank())
+plot
+```
+
+
+
+```{r }
+Idents(seur)=seur$annot.final
+contrast="ME-Mglia: YFP+ vs YFP- min.3reads"
+DEG=FindMarkers(seur, subset.ident =c("ME-IFN","ME-WAM","ME-MGLIA"), group.by="min.3reads.YFP", ident.1="YFP+", ident.2="YFP-", pseudocount.use = 0.1,min.pct=0, logfc.threshold=0  )  
+DEG$contrast=contrast
+DEG$pseudocount=0.1
+```
+
+```{r , fig.height =5, fig.width = 8}
+VolcanoPlot(DEG, p_valmax_col = 1e-20, color_not_label="black", dot.size = 2)+ggtitle(contrast)+ylab("-log10(adjustedPvalue)")+xlab("log2FC")+xlim(-9,9)
+```
+
+
+
+
+```{r,warning=FALSE}
+sessionInfo()
+```
+
